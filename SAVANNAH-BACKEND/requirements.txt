@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pyjwt
+pymongo
+python-dotenv
+requests
+pytz
+python-dateutil
