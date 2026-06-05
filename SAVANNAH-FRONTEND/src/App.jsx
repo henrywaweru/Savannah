@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import MpesaPayment from './MpesaPayment';
+import { ReceiptModal } from './receipt';
+
 
 // ─── API LAYER — talks to FastAPI backend via /api/* ─────────────────────
 const API_BASE = import.meta.env.VITE_API_URL || "https://savannah-backend-kcxm.onrender.com";
@@ -115,7 +117,7 @@ function StatCard({ label, value, sub, icon, accent="#10b981", donutVal }) {
 }
 
 // ─── Transaction Table ────────────────────────────────────────────────────
-function TransactionTable({ data }) {
+function TransactionTable({ data, onReceipt }) {
   if (!data || data.length === 0)
     return <p style={{ color:"#475569", textAlign:"center", padding:32, fontSize:13 }}>No transactions found.</p>;
   return (
@@ -123,7 +125,7 @@ function TransactionTable({ data }) {
       <table style={{ width:"100%", borderCollapse:"collapse" }}>
         <thead>
           <tr style={{ borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
-            {["Ref","Tenant","Unit","Amount","Method","Status","Date"].map(h => (
+            {["Ref","Tenant","Unit","Amount","Method","Status","Date",""].map(h => (
               <th key={h} style={{ padding:"12px 14px", color:"#475569", fontSize:11, fontWeight:600, textTransform:"uppercase", textAlign:"left" }}>{h}</th>
             ))}
           </tr>
@@ -145,6 +147,16 @@ function TransactionTable({ data }) {
                   </span>
                 </td>
                 <td style={{ padding:"12px 14px", color:"#475569", fontSize:12 }}>{t.date}</td>
+                <td style={{ padding:"12px 14px" }}>
+                  {onReceipt && t.status === "Completed" && (
+                    <button
+                      onClick={() => onReceipt(t)}
+                      style={{ padding:"4px 10px", borderRadius:6, border:"1px solid rgba(255,255,255,0.12)", background:"none", color:"#94a3b8", fontSize:11, cursor:"pointer", fontFamily:"inherit" }}
+                    >
+                      🧾 Receipt
+                    </button>
+                  )}
+                </td>
               </tr>
             );
           })}
@@ -169,40 +181,25 @@ function LoginScreen({ onLogin }) {
   const [showConfirmPw, setShowConfirmPw] = useState(false);
 
   const resetForm = () => {
-    setName("");
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-    setError("");
-    setShowPw(false);
-    setShowConfirmPw(false);
+    setName(""); setEmail(""); setPassword(""); setConfirmPassword("");
+    setError(""); setShowPw(false); setShowConfirmPw(false);
   };
 
-  const switchMode = (registerMode) => {
-    resetForm();
-    setIsRegister(registerMode);
-  };
+  const switchMode = (registerMode) => { resetForm(); setIsRegister(registerMode); };
 
   const handleSubmit = async () => {
-    setLoading(true);
-    setError("");
-
+    setLoading(true); setError("");
     try {
       if (isRegister) {
-        if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+        if (!name.trim() || !email.trim() || !password || !confirmPassword)
           throw new Error("Please fill in all required fields.");
-        }
-        if (password.length < 6) {
+        if (password.length < 6)
           throw new Error("Password must be at least 6 characters long.");
-        }
-        if (password !== confirmPassword) {
+        if (password !== confirmPassword)
           throw new Error("Passwords do not match.");
-        }
       }
-
-      if (!isRegister && (!email.trim() || !password)) {
+      if (!isRegister && (!email.trim() || !password))
         throw new Error("Enter your email and password.");
-      }
 
       const result = isRegister
         ? await api.register(name.trim(), email.trim(), password)
@@ -235,18 +232,8 @@ function LoginScreen({ onLogin }) {
         </div>
         <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:20, padding:32 }}>
           <div style={{ display:"flex", gap:8, marginBottom:24, background:"rgba(255,255,255,0.03)", padding:6, borderRadius:12 }}>
-            <button
-              onClick={() => switchMode(false)}
-              style={{ flex:1, padding:"10px 12px", borderRadius:8, border:"none", background:!isRegister ? "linear-gradient(135deg,#10b981,#059669)" : "transparent", color:!isRegister ? "white" : "#94a3b8", fontSize:13, fontWeight:600 }}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => switchMode(true)}
-              style={{ flex:1, padding:"10px 12px", borderRadius:8, border:"none", background:isRegister ? "linear-gradient(135deg,#10b981,#059669)" : "transparent", color:isRegister ? "white" : "#94a3b8", fontSize:13, fontWeight:600 }}
-            >
-              Create Account
-            </button>
+            <button onClick={() => switchMode(false)} style={{ flex:1, padding:"10px 12px", borderRadius:8, border:"none", background:!isRegister ? "linear-gradient(135deg,#10b981,#059669)" : "transparent", color:!isRegister ? "white" : "#94a3b8", fontSize:13, fontWeight:600, cursor:"pointer" }}>Sign In</button>
+            <button onClick={() => switchMode(true)}  style={{ flex:1, padding:"10px 12px", borderRadius:8, border:"none", background:isRegister  ? "linear-gradient(135deg,#10b981,#059669)" : "transparent", color:isRegister  ? "white" : "#94a3b8", fontSize:13, fontWeight:600, cursor:"pointer" }}>Create Account</button>
           </div>
 
           <h2 style={{ color:"#f1f5f9", fontSize:18, fontWeight:600, marginBottom:6 }}>{isRegister ? "Create your account" : "Welcome back"}</h2>
@@ -294,11 +281,7 @@ function LoginScreen({ onLogin }) {
             {loading ? (isRegister ? "Creating account…" : "Signing in…") : (isRegister ? "Create Account →" : "Sign In →")}
           </button>
 
-          <button
-            type="button"
-            onClick={() => switchMode(!isRegister)}
-            style={{ width:"100%", marginTop:14, background:"none", border:"none", color:"#94a3b8", fontSize:12, fontWeight:500 }}
-          >
+          <button type="button" onClick={() => switchMode(!isRegister)} style={{ width:"100%", marginTop:14, background:"none", border:"none", color:"#94a3b8", fontSize:12, fontWeight:500, cursor:"pointer" }}>
             {isRegister ? "Already have an account? Sign In" : "New user? Create Account"}
           </button>
 
@@ -335,6 +318,7 @@ function Dashboard({ user, token, onLogout }) {
   const [transactions, setTransactions] = useState([]);
   const [arrears, setArrears] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [receipt, setReceipt] = useState(null); // ← receipt state
 
   const showToast = (msg, type="success") => { setToast({msg,type}); setTimeout(()=>setToast(null),3500); };
 
@@ -356,8 +340,18 @@ function Dashboard({ user, token, onLogout }) {
       const result = await api.post("/api/payments/initiate", { unit_id:1, amount:parseFloat(payForm.amount), method:payForm.method, tenant_name:payForm.tenant }, token);
       setTransactions(prev => [result.transaction, ...prev]);
       setArrears(prev => prev.filter(a => a.tenant !== payForm.tenant));
-      setPayModal(false); setPayForm({tenant:"",unit:"",amount:"",method:"M-Pesa"});
+      setPayModal(false);
+      setPayForm({tenant:"",unit:"",amount:"",method:"M-Pesa"});
       showToast(`✅ ${result.message}`);
+      // Show receipt immediately after recording payment
+      setReceipt({
+        ref: result.transaction?.ref || 'N/A',
+        tenant: payForm.tenant,
+        unit: payForm.unit,
+        amount: payForm.amount,
+        method: payForm.method,
+        date: new Date().toLocaleDateString('en-KE', { year:'numeric', month:'long', day:'numeric' }),
+      });
     } catch { showToast("Payment failed. Try again.","error"); }
   };
 
@@ -461,7 +455,7 @@ function Dashboard({ user, token, onLogout }) {
                 </div>
                 <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:16, padding:22 }}>
                   <p style={{ color:"#f1f5f9", fontSize:14, fontWeight:600, marginBottom:16 }}>Recent Transactions</p>
-                  <TransactionTable data={transactions.slice(0,5)} />
+                  <TransactionTable data={transactions.slice(0,5)} onReceipt={t => setReceipt(t)} />
                 </div>
               </div>
             )}
@@ -469,7 +463,7 @@ function Dashboard({ user, token, onLogout }) {
             {activeTab==="transactions" && (
               <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:16, padding:22 }}>
                 <p style={{ color:"#f1f5f9", fontSize:14, fontWeight:600, marginBottom:16 }}>All Transactions · {transactions.length} records</p>
-                <TransactionTable data={transactions} />
+                <TransactionTable data={transactions} onReceipt={t => setReceipt(t)} />
               </div>
             )}
 
@@ -575,6 +569,9 @@ function Dashboard({ user, token, onLogout }) {
         </div>
       )}
 
+      {/* Receipt Modal */}
+      {receipt && <ReceiptModal receipt={receipt} onClose={() => setReceipt(null)} />}
+
       {toast && (
         <div style={{ position:"fixed", bottom:24, right:24, zIndex:200, background:toast.type==="error"?"#ef4444":"#10b981", color:"white", padding:"12px 20px", borderRadius:12, fontSize:13, fontWeight:500, boxShadow:"0 8px 32px rgba(0,0,0,0.4)", maxWidth:380 }}>
           {toast.msg}
@@ -588,9 +585,12 @@ function Dashboard({ user, token, onLogout }) {
 function TenantView({ user, token, onLogout }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showMpesaPayment, setShowMpesaPayment] = useState(false); // ← ADD THIS
+  const [showMpesaPayment, setShowMpesaPayment] = useState(false);
+  const [receipt, setReceipt] = useState(null); // ← receipt state
 
-
+  const [rentAmount, setRentAmount] = useState(35000);
+  const [propertyId, setPropertyId] = useState(1);
+  const [unitNumber, setUnitNumber] = useState("A-101");
 
   useEffect(() => {
     api.get("/api/transactions", token)
@@ -599,24 +599,9 @@ function TenantView({ user, token, onLogout }) {
       .finally(() => setLoading(false));
   }, [token]);
 
-  const paid = transactions.filter(t=>t.status==="Completed").reduce((s,t)=>s+t.amount, 0);
-  
-  // Get rent amount (you may need to fetch this from API)
-  
-  // const rentAmount = 35000; // Default rent amount - you can fetch from /api/units
-  // const tenantId = user.id;
-  // const propertyId = 1; // You can fetch actual property ID from API
-
-  // NEW CODE (fetch real data)
-  const [rentAmount, setRentAmount] = useState(35000);
-  const [propertyId, setPropertyId] = useState(1);
-  const [unitNumber, setUnitNumber] = useState("A-101");
-
   useEffect(() => {
-    // Fetch tenant's unit info
     api.get("/api/units", token)
       .then(units => {
-        // Find unit assigned to this tenant
         const myUnit = units.find(u => u.tenant === user.name);
         if (myUnit) {
           setRentAmount(myUnit.rent_amount);
@@ -627,12 +612,13 @@ function TenantView({ user, token, onLogout }) {
       .catch(err => console.error("Failed to fetch unit:", err));
   }, [token, user.name]);
 
-  // Function to refresh dashboard after payment
   const refreshTransactions = () => {
     api.get("/api/transactions", token)
       .then(data => setTransactions(data.filter(t => t.tenant === user.name)))
       .catch(() => {});
   };
+
+  const paid = transactions.filter(t=>t.status==="Completed").reduce((s,t)=>s+t.amount, 0);
 
   return (
     <div style={{ minHeight:"100vh", background:"#080f1e", fontFamily:"'DM Sans','Segoe UI',sans-serif", padding:24 }}>
@@ -643,9 +629,9 @@ function TenantView({ user, token, onLogout }) {
             <h1 style={{ color:"#f1f5f9", fontFamily:"'Playfair Display',serif", fontSize:22 }}>Tenant Portal</h1>
             <p style={{ color:"#475569", fontSize:13, marginTop:2 }}>Welcome, {user.name}</p>
           </div>
-          <button onClick={onLogout} style={{ padding:"8px 16px", borderRadius:8, border:"1px solid rgba(255,255,255,0.1)", background:"none", color:"#94a3b8", fontSize:12 }}>Sign Out</button>
+          <button onClick={onLogout} style={{ padding:"8px 16px", borderRadius:8, border:"1px solid rgba(255,255,255,0.1)", background:"none", color:"#94a3b8", fontSize:12, cursor:"pointer" }}>Sign Out</button>
         </div>
-        
+
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:14, marginBottom:24 }}>
           {[["My Unit",unitNumber,"🏠"],["Rent Amount",fmt(rentAmount),"💰"],["Total Paid",fmt(paid),"✅"]].map(([l,v,ic])=>(
             <div key={l} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, padding:18 }}>
@@ -655,27 +641,12 @@ function TenantView({ user, token, onLogout }) {
           ))}
         </div>
 
-        {/* ========== ADD M-PESA PAYMENT BUTTON HERE ========== */}
+        {/* M-Pesa Payment Section */}
         {!showMpesaPayment ? (
           <div style={{ marginBottom:24 }}>
             <button
               onClick={() => setShowMpesaPayment(true)}
-              style={{
-                width: "100%",
-                padding: "14px 20px",
-                borderRadius: 12,
-                border: "none",
-                background: "linear-gradient(135deg,#10b981,#059669)",
-                color: "white",
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: "pointer",
-                boxShadow: "0 4px 16px rgba(16,185,129,0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8
-              }}
+              style={{ width:"100%", padding:"14px 20px", borderRadius:12, border:"none", background:"linear-gradient(135deg,#10b981,#059669)", color:"white", fontSize:14, fontWeight:600, cursor:"pointer", boxShadow:"0 4px 16px rgba(16,185,129,0.3)", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}
             >
               💳 Pay Rent with M-Pesa
             </button>
@@ -683,46 +654,50 @@ function TenantView({ user, token, onLogout }) {
         ) : (
           <div style={{ marginBottom:24 }}>
             <MpesaPayment
-  tenantId={user.id}
-  propertyId={propertyId}
-  token={token}
-  onSuccess={() => {
-    setShowMpesaPayment(false);
-    refreshTransactions();
-  }}
-  onError={(error) => {
-    console.error("Payment error:", error);
-  }}
-/>
+              tenantId={user.id}
+              propertyId={propertyId}
+              token={token}
+              onSuccess={(data) => {
+                setShowMpesaPayment(false);
+                refreshTransactions();
+                // Show receipt after successful M-Pesa payment
+                setReceipt({
+                  ref: data?.ref || data?.receipt_number || 'N/A',
+                  tenant: user.name,
+                  unit: unitNumber,
+                  amount: rentAmount,
+                  method: 'M-Pesa',
+                  date: new Date().toLocaleDateString('en-KE', { year:'numeric', month:'long', day:'numeric' }),
+                });
+              }}
+              onError={(error) => {
+                console.error("Payment error:", error);
+              }}
+            />
             <button
               onClick={() => setShowMpesaPayment(false)}
-              style={{
-                width: "100%",
-                marginTop: 8,
-                padding: "8px",
-                borderRadius: 8,
-                border: "1px solid rgba(255,255,255,0.1)",
-                background: "none",
-                color: "#64748b",
-                fontSize: 12,
-                cursor: "pointer"
-              }}
+              style={{ width:"100%", marginTop:8, padding:"8px", borderRadius:8, border:"1px solid rgba(255,255,255,0.1)", background:"none", color:"#64748b", fontSize:12, cursor:"pointer" }}
             >
               Cancel
             </button>
           </div>
         )}
-        {/* ========== END M-PESA PAYMENT SECTION ========== */}
 
+        {/* Payment History */}
         <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:16, padding:22 }}>
           <p style={{ color:"#f1f5f9", fontSize:14, fontWeight:600, marginBottom:16 }}>My Payment History</p>
-          {loading ? <p style={{ color:"#475569", textAlign:"center", padding:24 }}>Loading…</p> : <TransactionTable data={transactions} />}
+          {loading
+            ? <p style={{ color:"#475569", textAlign:"center", padding:24 }}>Loading…</p>
+            : <TransactionTable data={transactions} onReceipt={t => setReceipt(t)} />
+          }
         </div>
       </div>
+
+      {/* Receipt Modal */}
+      {receipt && <ReceiptModal receipt={receipt} onClose={() => setReceipt(null)} />}
     </div>
   );
 }
-
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ROOT

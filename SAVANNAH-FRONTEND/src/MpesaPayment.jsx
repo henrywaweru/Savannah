@@ -263,9 +263,7 @@ function MpesaPayment({ tenantId, propertyId, token, onSuccess, onError }) {
             <p style={{ fontSize: 12, color: '#fbbf24', fontWeight: 600, marginBottom: 4 }}>
               Sandbox mode
             </p>
-            <p style={{ fontSize: 11, color: '#92400e', marginBottom: 12 }}>
-              No real prompt is sent to your phone. Click below to simulate a successful payment.
-            </p>
+            
             <button
               onClick={simulatePayment}
               disabled={simulating}
@@ -276,7 +274,7 @@ function MpesaPayment({ tenantId, propertyId, token, onSuccess, onError }) {
                 border: 'none', borderRadius: 8, cursor: simulating ? 'not-allowed' : 'pointer',
               }}
             >
-              {simulating ? 'Processing...' : '✓ Simulate Payment'}
+              {simulating ? 'Processing...' : '✓ Confirm Payment'}
             </button>
           </div>
 
